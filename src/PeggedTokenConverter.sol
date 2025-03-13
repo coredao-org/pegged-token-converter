@@ -53,7 +53,7 @@ contract PeggedTokenConverter is
      * @param _token The input token address
      * @param _amount The amount to be converted
      */
-    function convert(address _token, uint256 _amount) public {
+    function convert(address _token, uint256 _amount) external {
         require(_token == address(tokenA) || _token == address(tokenB), "Invalid token type");
         require(_amount > 0, "No zero convert");
         if(!bidirectional && _token != address(tokenA)) {
