@@ -24,9 +24,9 @@ contract PeggedTokenConverter is
     IERC20 public tokenB;
     bool public bidirectional;
 
-    event Deposit(address token, uint256 amount);
-    event Withdraw(address token, uint256 amount);
-    event Convert(address user, address inputToken, uint256 amount);
+    event Deposit(address indexed token, uint256 amount);
+    event Withdraw(address indexed token, uint256 amount);
+    event Convert(address indexed user, address indexed inputToken, uint256 amount);
     event ToggleBidirectional(bool currStatus);
     
     constructor() {
