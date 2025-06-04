@@ -12,8 +12,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @notice A bidirectional ERC20 token converter.
  * @dev This converter:
  *      - Allows owner to deposit tokens
- *      - Enables users to convert tokens at 1:1 ratio
  *      - Allows owner to withdraw tokens
+ *      - Enables users to convert input-to-output tokens at 1:1 ratio
+ *      - Whitelisted partners can access the output-to-input token conversion route
+ *      - If 'bidirectional' is enabled, all users can access both routes
  */
 contract PeggedTokenConverter is
     Ownable2StepUpgradeable
