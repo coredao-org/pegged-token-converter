@@ -25,12 +25,12 @@ contract PeggedTokenConverter is
     bool public bidirectional;
     mapping(address => bool) public partners;
 
-    event Deposit(address indexed token, uint256 amount);
-    event Withdraw(address indexed token, uint256 amount);
-    event Convert(address indexed user, address indexed inputToken, uint256 amount);
-    event ToggleBidirectional(bool currStatus);
-    event PartnerAdded(address partner);
-    event PartnerRemoved(address partner);
+    event Deposit(address indexed token, uint256 indexed amount);
+    event Withdraw(address indexed token, uint256 indexed amount);
+    event Convert(address indexed user, address indexed inputToken, uint256 indexed amount);
+    event ToggleBidirectional(bool indexed currStatus);
+    event PartnerAdded(address indexed partner);
+    event PartnerRemoved(address indexed partner);
 
     constructor() {
         _disableInitializers();
