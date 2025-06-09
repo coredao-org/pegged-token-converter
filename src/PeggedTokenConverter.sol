@@ -12,8 +12,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @notice A bidirectional ERC20 token converter.
  * @dev This converter:
  *      - Allows owner to deposit tokens
- *      - Enables users to convert tokens at 1:1 ratio
  *      - Allows owner to withdraw tokens
+ *      - Enables users to convert input-to-output tokens at 1:1 ratio
+ *      - Whitelisted partners can access the output-to-input token conversion route
+ *      - If 'bidirectional' is enabled, all users can access both routes
  */
 contract PeggedTokenConverter is
     Ownable2StepUpgradeable
@@ -23,12 +25,15 @@ contract PeggedTokenConverter is
     IERC20 public tokenA;
     IERC20 public tokenB;
     bool public bidirectional;
+    mapping(address => bool) public partners;
 
-    event Deposit(address indexed token, uint256 amount);
-    event Withdraw(address indexed token, uint256 amount);
-    event Convert(address indexed user, address indexed inputToken, uint256 amount);
-    event ToggleBidirectional(bool currStatus);
-    
+    event Deposit(address indexed token, uint256 indexed amount);
+    event Withdraw(address indexed token, uint256 indexed amount);
+    event Convert(address indexed user, address indexed inputToken, uint256 indexed amount);
+    event ToggleBidirectional(bool indexed currStatus);
+    event PartnerAdded(address indexed partner);
+    event PartnerRemoved(address indexed partner);
+
     constructor() {
         _disableInitializers();
     }
@@ -56,8 +61,10 @@ contract PeggedTokenConverter is
     function convert(address _token, uint256 _amount) external {
         require(_token == address(tokenA) || _token == address(tokenB), "Invalid token type");
         require(_amount > 0, "No zero convert");
-        if(!bidirectional && _token != address(tokenA)) {
-            revert("Conversions paused");
+        if(_token != address(tokenA)) {
+            if(!bidirectional && !partners[msg.sender]) {
+                revert("Conversions paused");
+            }
         }
 
         IERC20 inputToken;
@@ -120,6 +127,28 @@ contract PeggedTokenConverter is
         bool current = bidirectional;
         bidirectional = !current;
         emit ToggleBidirectional(bidirectional);
+    }
+
+    /**
+     * @dev Adds a partner to the whitelist
+     * @param _partner The address of the partner
+     */
+    function addPartner(address _partner) external onlyOwner {
+        require(_partner != address(0), "Invalid address");
+        require(!partners[_partner], "Partner already on whitelist");
+        partners[_partner] = true;
+        emit PartnerAdded(_partner);
+    }
+
+    /**
+     * @dev Removes a partner to the whitelist
+     * @param _partner The address of the partner
+     */
+    function removePartner(address _partner) external onlyOwner {
+        require(_partner != address(0), "Invalid address");
+        require(partners[_partner], "Partner not on whitelist");
+        partners[_partner] = false;
+        emit PartnerRemoved(_partner);
     }
 
     // ------------------------- Viewers -------------------------

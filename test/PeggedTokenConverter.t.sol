@@ -331,4 +331,61 @@ contract PeggedTokenConverterTest is Test {
         uint256 userTokenBBalance = tokenB.balanceOf(emily);
         assertEq(userTokenBBalance, 0);
     }
+
+    function test_addRemovePartner() public {
+        assertEq(converter.partners(emily), false);
+
+        // Add emily as partner
+        vm.startPrank(owner);
+        converter.addPartner(emily);
+        assertEq(converter.partners(emily), true);
+
+        // Remove emily as partner
+        converter.removePartner(emily);
+        assertEq(converter.partners(emily), false);
+    }
+
+    function test_partnerBidirectional() public {
+        // Global bidirectional is false
+        assertEq(converter.bidirectional(), false);
+
+        // Add emily as partner
+        vm.startPrank(owner);
+        converter.addPartner(emily);
+        assertEq(converter.partners(emily), true);
+
+        uint256 amount = 10 ether;
+        tokenB.mint(emily, amount);
+
+        // Owner deposits liquidity for both token types
+        uint256 depositAmount = 50 ether;
+        vm.startPrank(owner);
+        tokenA.approve(address(converter), depositAmount);
+        converter.deposit(address(tokenA), depositAmount);
+        tokenB.approve(address(converter), depositAmount);
+        converter.deposit(address(tokenB), depositAmount);
+
+        // Check contract balances pre-conversion
+        uint256 contractTokenABalancePre = tokenA.balanceOf(address(converter));
+        assertEq(contractTokenABalancePre, depositAmount);
+        uint256 contractTokenBBalancePre = tokenB.balanceOf(address(converter));
+        assertEq(contractTokenBBalancePre, depositAmount);
+
+        // Partners's conversion attempt should be successful despite global bidirectionality turned off
+        vm.startPrank(emily);
+        tokenB.approve(address(converter), amount);
+        converter.convert(address(tokenB), amount);
+
+        // Check contract balances post-conversion
+        uint256 contractTokenABalancePost = tokenA.balanceOf(address(converter));
+        assertEq(contractTokenABalancePost, contractTokenABalancePre-amount);
+        uint256 contractTokenBBalancePost = tokenB.balanceOf(address(converter));
+        assertEq(contractTokenBBalancePost, contractTokenBBalancePre+amount);
+
+        // Check user balances
+        uint256 userTokenABalance = tokenA.balanceOf(emily);
+        assertEq(userTokenABalance, amount);
+        uint256 userTokenBBalance = tokenB.balanceOf(emily);
+        assertEq(userTokenBBalance, 0);
+    }
 }
